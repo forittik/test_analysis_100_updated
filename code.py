@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load data from the CSV file (assuming it's named 'data.csv')
-data = pd.read_csv('data.csv')
+data = pd.read_csv('https://raw.githubusercontent.com/forittik/test_analysis_100_updated/refs/heads/main/final_mereged_data.csv')
 
 # Set up constants
 CORRECT_MARK = 4
