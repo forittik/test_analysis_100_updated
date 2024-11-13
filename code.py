@@ -95,42 +95,39 @@ if student_ids:
         st.write(f"Mathematics Score: {mathematics_scores[idx]}")
         st.write(f"Total Score: {total_scores[idx]} / 300")
 
-    # Total Score Distribution - Bar Plot
-    st.subheader("Total Score Distribution")
+    # Total Score Distribution - Density Plot
+    st.subheader("Total Score Distribution (Density Plot)")
     plt.figure(figsize=(10, 6))
-    plt.bar(student_ids, total_scores, color='purple')
-    plt.xlabel("Student IDs")
-    plt.ylabel("Total Score")
-    plt.title("Total Score Comparison Across Students")
-    plt.ylim(0, 300)  # Max total score of 300
+    sns.kdeplot(total_scores, fill=True, color='purple', shade=True)
+    plt.xlabel("Total Score")
+    plt.ylabel("Density")
+    plt.title("Density Plot of Total Scores")
     st.pyplot(plt)
 
-    # Subject-wise Comparison - Grouped Bar Plot
-    st.subheader("Subject-wise Performance Comparison")
+    # Subject-wise Performance Comparison - Stacked Bar Chart
+    st.subheader("Subject-wise Performance Comparison (Stacked Bar Chart)")
     subjects = ['Physics', 'Chemistry', 'Mathematics']
     subject_scores = [physics_scores, chemistry_scores, mathematics_scores]
 
-    plt.figure(figsize=(10, 6))
-    width = 0.25  # Width of bars
-    x = range(len(student_ids))
+    # Create a stacked bar chart
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(student_ids, physics_scores, label='Physics', color='blue')
+    ax.bar(student_ids, chemistry_scores, bottom=physics_scores, label='Chemistry', color='green')
+    ax.bar(student_ids, mathematics_scores, bottom=[i + j for i, j in zip(physics_scores, chemistry_scores)], label='Mathematics', color='orange')
 
-    for i, subject_score in enumerate(subject_scores):
-        plt.bar([p + width * i for p in x], subject_score, width=width, label=subjects[i])
+    ax.set_xlabel("Student IDs")
+    ax.set_ylabel("Scores")
+    ax.set_title("Stacked Bar Chart of Subject-wise Scores")
+    ax.legend()
+    st.pyplot(fig)
 
-    plt.xlabel("Student IDs")
-    plt.ylabel("Scores")
-    plt.title("Subject-wise Comparison")
-    plt.xticks([p + width for p in x], student_ids)  # Adjust the labels
-    plt.legend()
-    st.pyplot(plt)
-
-    # Box Plot for Subject Scores Distribution
-    st.subheader("Subject-wise Score Distribution (Box Plot)")
+    # Violin Plot for Subject Scores Distribution
+    st.subheader("Subject-wise Score Distribution (Violin Plot)")
     subject_scores_data = [physics_scores, chemistry_scores, mathematics_scores]
     
     plt.figure(figsize=(10, 6))
-    sns.boxplot(data=subject_scores_data, orient='v', notch=True, palette="Set2")
+    sns.violinplot(data=subject_scores_data, inner="point", palette="Set2")
     plt.xticks([0, 1, 2], subjects)
-    plt.title("Box Plot of Subject-wise Scores")
+    plt.title("Violin Plot of Subject-wise Scores")
     plt.ylabel("Scores")
     st.pyplot(plt)
