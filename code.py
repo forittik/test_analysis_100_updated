@@ -39,7 +39,7 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
             else:  # Wrong answer
                 score += WRONG_MARK
 
-    # Calculate optional questions score (considering the first 5 correct attempts only)
+    # Calculate optional questions score (considering the first 5 attempted only)
     optional_attempts = []
     for q in optional_questions:
         # Check if the question exists in the dataset
@@ -48,16 +48,10 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
             if not pd.isna(student_answer):  # Attempted question
                 optional_attempts.append((q, student_answer))
 
-    # Filter only the first 5 attempted optional questions
-    correct_optional_attempts = [(q, ans) for q, ans in optional_attempts if ans == data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]]
-    incorrect_optional_attempts = [(q, ans) for q, ans in optional_attempts if ans != data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]]
-
-    # Consider first 5 correct answers, if fewer than 5, include incorrect answers to reach 5 attempts
-    selected_optional_attempts = correct_optional_attempts[:5]
-    if len(selected_optional_attempts) < 5:
-        selected_optional_attempts += incorrect_optional_attempts[:5 - len(selected_optional_attempts)]
-
-    for q, student_answer in selected_optional_attempts:
+    # Consider only the first 5 attempted optional questions (correct or incorrect)
+    optional_attempts = optional_attempts[:5]
+    
+    for q, student_answer in optional_attempts:
         correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
         if student_answer == correct_answer:
             score += CORRECT_MARK
