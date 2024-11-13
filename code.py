@@ -188,4 +188,51 @@ if student_ids:
         st.pyplot(fig)
 
     # Chapter-wise Average Score Analysis
-    st.subheader("
+        # Chapter-wise Average Score Analysis
+    st.subheader("Chapter-wise Average Score Analysis")
+
+    # Create a dictionary to store chapter-wise scores
+    chapter_scores = {}
+    chapter_question_counts = {}
+
+    # Iterate through the questions in the data and calculate the scores for each chapter
+    for student_id in student_ids:
+        for q in data['Question_no']:
+            chapter = data.loc[data['Question_no'] == q, 'chapter'].values[0]
+            correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+            student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
+
+            # Update chapter scores and counts
+            if chapter not in chapter_scores:
+                chapter_scores[chapter] = 0
+                chapter_question_counts[chapter] = 0
+
+            if student_answer == correct_answer:
+                chapter_scores[chapter] += CORRECT_MARK
+            elif pd.isna(student_answer):
+                chapter_scores[chapter] += UNATTEMPTED_MARK
+            else:
+                chapter_scores[chapter] += WRONG_MARK
+
+            chapter_question_counts[chapter] += 1
+
+    # Calculate average score per chapter
+    chapter_avg_scores = {
+        chapter: chapter_scores[chapter] / chapter_question_counts[chapter] 
+        for chapter in chapter_scores
+    }
+
+    # Plot Chapter-wise Average Scores
+    chapters = list(chapter_avg_scores.keys())
+    avg_scores = list(chapter_avg_scores.values())
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.barh(chapters, avg_scores, color='teal')
+
+    ax.set_xlabel("Average Score")
+    ax.set_ylabel("Chapters")
+    ax.set_title("Chapter-wise Average Scores")
+
+    # Display the plot
+    st.pyplot(fig)
+
