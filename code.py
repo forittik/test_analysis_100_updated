@@ -22,7 +22,7 @@ CHEMISTRY_OPTIONAL = list(range(51, 61))      # Questions 51-60
 MATHEMATICS_REQUIRED = list(range(61, 81))    # Questions 61-80
 MATHEMATICS_OPTIONAL = list(range(81, 91))    # Questions 81-90
 
-# Function to calculate scores based on rules
+# Function to calculate subject scores based on rules
 def calculate_subject_score(data, student_id, required_questions, optional_questions):
     score = 0
 
@@ -141,22 +141,38 @@ if student_ids:
         ax.legend()
         st.pyplot(fig)
 
-    # Scatter Plot for Student Performance Across Subjects
-    st.subheader("Scatter Plot of Student Performance Across Subjects")
+    # Scatter Plot for Answers Marked Correctly or Incorrectly
+    st.subheader("Scatter Plot of Answers Marked Correctly or Incorrectly")
 
     # Prepare data for the scatter plot
-    x = np.arange(len(student_ids))  # Student IDs as x-axis
-    fig, ax = plt.subplots(figsize=(10, 6))
+    question_numbers = np.concatenate([PHYSICS_REQUIRED, PHYSICS_OPTIONAL, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL])
+    answer_status = []
 
-    # Scatter plot for Physics, Chemistry, and Mathematics
-    ax.scatter(x, physics_scores, color='blue', label='Physics', s=100, marker='o')
-    ax.scatter(x, chemistry_scores, color='green', label='Chemistry', s=100, marker='^')
-    ax.scatter(x, mathematics_scores, color='orange', label='Mathematics', s=100, marker='s')
+    # Loop through each question and student to check if the answer was correct, incorrect, or unattempted
+    for student_id in student_ids:
+        for q in question_numbers:
+            if q in data['Question_no'].values:
+                student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
+                correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+                # Check if answer is correct, incorrect, or unattempted
+                if pd.isna(student_answer):
+                    answer_status.append((student_id, q, np.nan))  # Unattempted
+                elif student_answer == correct_answer:
+                    answer_status.append((student_id, q, 1))  # Correct
+                else:
+                    answer_status.append((student_id, q, 0))  # Incorrect
 
-    ax.set_xlabel("Student IDs")
-    ax.set_ylabel("Scores")
-    ax.set_title("Scatter Plot of Student Performance Across Subjects")
-    ax.set_xticks(x)
-    ax.set_xticklabels(student_ids)
-    ax.legend()
+    # Convert to DataFrame for plotting
+    answer_df = pd.DataFrame(answer_status, columns=['Student_ID', 'Question_No', 'Status'])
+
+    # Scatter plot for each student's answers
+    fig, ax = plt.subplots(figsize=(12, 6))
+    for student_id in student_ids:
+        student_data = answer_df[answer_df['Student_ID'] == student_id]
+        ax.scatter(student_data['Question_No'], student_data['Status'], label=student_id, alpha=0.6)
+
+    ax.set_xlabel("Question Number")
+    ax.set_ylabel("Answer Status (1 = Correct, 0 = Incorrect, NaN = Unattempted)")
+    ax.set_title("Scatter Plot of Student's Answers (Correct/Incorrect/Unattempted)")
+    ax.legend(title="Student IDs")
     st.pyplot(fig)
