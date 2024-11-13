@@ -27,6 +27,15 @@ optional_physics_start, optional_physics_end = 20, 30
 optional_chemistry_start, optional_chemistry_end = 50, 60
 optional_math_start, optional_math_end = 80, 90
 
+# Ensure the indices do not exceed the row count of the DataFrame
+num_rows = df.shape[0]
+physics_end = min(physics_end, num_rows)
+chemistry_end = min(chemistry_end, num_rows)
+math_end = min(math_end, num_rows)
+optional_physics_end = min(optional_physics_end, num_rows)
+optional_chemistry_end = min(optional_chemistry_end, num_rows)
+optional_math_end = min(optional_math_end, num_rows)
+
 # Calculate the marks for Physics
 physics_marks = 0
 for i in range(physics_start, physics_end):
@@ -41,7 +50,7 @@ for i in range(optional_physics_start, optional_physics_end):
         optional_physics_attempted += 1
 
 if optional_physics_attempted > 5:
-    for i in range(optional_physics_start, optional_physics_start + 5):
+    for i in range(optional_physics_start, min(optional_physics_start + 5, optional_physics_end)):
         if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
             physics_marks += 4
         elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key']:
@@ -67,7 +76,7 @@ for i in range(optional_chemistry_start, optional_chemistry_end):
         optional_chemistry_attempted += 1
 
 if optional_chemistry_attempted > 5:
-    for i in range(optional_chemistry_start, optional_chemistry_start + 5):
+    for i in range(optional_chemistry_start, min(optional_chemistry_start + 5, optional_chemistry_end)):
         if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
             chemistry_marks += 4
         elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key']:
@@ -93,7 +102,7 @@ for i in range(optional_math_start, optional_math_end):
         optional_math_attempted += 1
 
 if optional_math_attempted > 5:
-    for i in range(optional_math_start, optional_math_start + 5):
+    for i in range(optional_math_start, min(optional_math_start + 5, optional_math_end)):
         if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
             math_marks += 4
         elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key']:
