@@ -246,6 +246,10 @@ import streamlit as st
 import matplotlib.pyplot as plt
 
 # Function to calculate the number of questions per chapter for each subject
+import streamlit as st
+import matplotlib.pyplot as plt
+
+# Function to calculate the number of questions per chapter for each subject
 def chapter_question_distribution(subject_required, subject_optional):
     # Combine required and optional questions for the subject
     subject_questions = subject_required + subject_optional
@@ -287,9 +291,12 @@ ax.bar(chapter_distribution.keys(), chapter_distribution.values(), color='teal')
 ax.set_title(f"{subject_selection} Chapter-wise Question Distribution")
 ax.set_xlabel("Chapters")
 ax.set_ylabel("Number of Questions")
-ax.tick_params(axis='x', rotation=45, ha='right')
+
+# Rotate x-axis labels and align them
+ax.set_xticklabels(chapter_distribution.keys(), rotation=45, ha='right')
 
 # Display the plot
 st.pyplot(fig)
+
 
 
