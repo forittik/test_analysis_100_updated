@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 
 # Load data from the CSV file
@@ -73,7 +72,6 @@ if student_ids:
     physics_scores = []
     chemistry_scores = []
     mathematics_scores = []
-    total_scores = []
 
     # Loop through each selected student
     for student_id in student_ids:
@@ -86,69 +84,64 @@ if student_ids:
         physics_scores.append(physics_score)
         chemistry_scores.append(chemistry_score)
         mathematics_scores.append(mathematics_score)
-        total_scores.append(physics_score + chemistry_score + mathematics_score)
 
-    # Calculate average total scores
+    # Calculate average scores for each subject across all students
     all_student_columns = data.columns[3:]  # Assuming student data starts from the 4th column
-    all_total_scores = [
-        calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL) +
-        calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL) +
+    avg_physics_all_students = np.mean([
+        calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
+        for student_id in all_student_columns
+    ])
+    avg_chemistry_all_students = np.mean([
+        calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
+        for student_id in all_student_columns
+    ])
+    avg_mathematics_all_students = np.mean([
         calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
         for student_id in all_student_columns
-    ]
-    avg_all_students = np.mean(all_total_scores)
-    avg_selected_students = np.mean(total_scores)
+    ])
 
-    # Display scores for each selected student
-    for idx, student_id in enumerate(student_ids):
-        st.subheader(f"Scores for {student_id}")
-        st.write(f"Physics Score: {physics_scores[idx]}")
-        st.write(f"Chemistry Score: {chemistry_scores[idx]}")
-        st.write(f"Mathematics Score: {mathematics_scores[idx]}")
-        st.write(f"Total Score: {total_scores[idx]} / 300")
+    # Calculate average scores for selected students
+    avg_physics_selected = np.mean(physics_scores)
+    avg_chemistry_selected = np.mean(chemistry_scores)
+    avg_mathematics_selected = np.mean(mathematics_scores)
 
-    # Total Score Distribution - Bar Plot with Average Lines
-    st.subheader("Total Score Distribution (Bar Plot)")
-    plt.figure(figsize=(10, 6))
-    plt.bar(student_ids, total_scores, color='purple', label='Total Scores')
+    # Subject-wise Average Comparison Plot
+    st.subheader("Subject-wise Average Scores (Selected vs All Students)")
 
-    # Plot average lines and display average values above the lines
-    plt.axhline(avg_all_students, color='red', linestyle='--', linewidth=1.5, label='Average for All Students')
-    plt.axhline(avg_selected_students, color='blue', linestyle='--', linewidth=1.5, label='Average for Selected Students')
+    subjects = ['Physics', 'Chemistry', 'Mathematics']
+    avg_all_students = [avg_physics_all_students, avg_chemistry_all_students, avg_mathematics_all_students]
+    avg_selected_students = [avg_physics_selected, avg_chemistry_selected, avg_mathematics_selected]
 
-    # Adding text for average values above each line
-    plt.text(len(student_ids) - 0.5, avg_all_students + 5, f"{avg_all_students:.2f}", color='red', ha='center', fontweight='bold')
-    plt.text(len(student_ids) - 0.5, avg_selected_students + 5, f"{avg_selected_students:.2f}", color='blue', ha='center', fontweight='bold')
+    x = np.arange(len(subjects))  # label locations
+    width = 0.35  # width of the bars
 
-    # Labels and legend
-    plt.xlabel("Student IDs")
-    plt.ylabel("Total Score")
-    plt.title("Total Score Comparison Across Students")
-    plt.ylim(0, 300)  # Max total score of 300
-    plt.legend()
-    st.pyplot(plt)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bars1 = ax.bar(x - width/2, avg_all_students, width, label='All Students', color='skyblue')
+    bars2 = ax.bar(x + width/2, avg_selected_students, width, label='Selected Students', color='orange')
 
-    # Subject-wise Performance Comparison - Side-by-Side Column Chart
-    st.subheader("Subject-wise Performance Comparison (Side-by-Side Column Chart)")
+    # Adding the average values above each bar
+    for bar in bars1:
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 2,
+            f'{bar.get_height():.2f}',
+            ha='center', color='black', fontweight='bold'
+        )
 
-    # Ensure the lists match the length of student_ids
-    if len(student_ids) == len(physics_scores) == len(chemistry_scores) == len(mathematics_scores):
-        subjects = ['Physics', 'Chemistry', 'Mathematics']
-        subject_scores = [physics_scores, chemistry_scores, mathematics_scores]
+    for bar in bars2:
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 2,
+            f'{bar.get_height():.2f}',
+            ha='center', color='black', fontweight='bold'
+        )
 
-        # Create a side-by-side bar chart
-        width = 0.25  # Width of bars
-        x = np.arange(len(student_ids))  # Position of bars on x-axis
+    # Labeling and display
+    ax.set_xlabel("Subjects")
+    ax.set_ylabel("Average Scores")
+    ax.set_title("Average Scores by Subject for All Students vs Selected Students")
+    ax.set_xticks(x)
+    ax.set_xticklabels(subjects)
+    ax.legend()
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.bar(x - width, physics_scores, width, label='Physics', color='blue')
-        ax.bar(x, chemistry_scores, width, label='Chemistry', color='green')
-        ax.bar(x + width, mathematics_scores, width, label='Mathematics', color='orange')
-
-        ax.set_xlabel("Student IDs")
-        ax.set_ylabel("Scores")
-        ax.set_title("Subject-wise Scores (Side-by-Side Comparison)")
-        ax.set_xticks(x)
-        ax.set_xticklabels(student_ids)
-        ax.legend()
-        st.pyplot(fig)
+    st.pyplot(fig)
