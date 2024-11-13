@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 # Load data from the CSV file (assuming it's named 'data.csv')
 data = pd.read_csv('https://raw.githubusercontent.com/forittik/test_analysis_100_updated/refs/heads/main/final_mereged_data.csv')
@@ -95,13 +96,24 @@ if student_ids:
         st.write(f"Mathematics Score: {mathematics_scores[idx]}")
         st.write(f"Total Score: {total_scores[idx]} / 300")
 
-    # Total Score Distribution - Density Plot
-    st.subheader("Total Score Distribution (Density Plot)")
+    # Total Score Distribution - Density Plot (only if more than 1 student)
+    if len(student_ids) > 1:
+        st.subheader("Total Score Distribution (Density Plot)")
+        plt.figure(figsize=(10, 6))
+        sns.kdeplot(total_scores, fill=True, color='purple', shade=True)
+        plt.xlabel("Total Score")
+        plt.ylabel("Density")
+        plt.title("Density Plot of Total Scores")
+        st.pyplot(plt)
+
+    # Total Score Distribution - Bar Plot
+    st.subheader("Total Score Distribution (Bar Plot)")
     plt.figure(figsize=(10, 6))
-    sns.kdeplot(total_scores, fill=True, color='purple', shade=True)
-    plt.xlabel("Total Score")
-    plt.ylabel("Density")
-    plt.title("Density Plot of Total Scores")
+    plt.bar(student_ids, total_scores, color='purple')
+    plt.xlabel("Student IDs")
+    plt.ylabel("Total Score")
+    plt.title("Total Score Comparison Across Students")
+    plt.ylim(0, 300)  # Max total score of 300
     st.pyplot(plt)
 
     # Subject-wise Performance Comparison - Stacked Bar Chart
@@ -121,13 +133,25 @@ if student_ids:
     ax.legend()
     st.pyplot(fig)
 
-    # Violin Plot for Subject Scores Distribution
-    st.subheader("Subject-wise Score Distribution (Violin Plot)")
-    subject_scores_data = [physics_scores, chemistry_scores, mathematics_scores]
-    
-    plt.figure(figsize=(10, 6))
-    sns.violinplot(data=subject_scores_data, inner="point", palette="Set2")
-    plt.xticks([0, 1, 2], subjects)
-    plt.title("Violin Plot of Subject-wise Scores")
-    plt.ylabel("Scores")
-    st.pyplot(plt)
+    # Radar Chart for Individual Student Performance Across Subjects
+    st.subheader("Radar Chart of Subject-wise Performance (For Each Student)")
+    for idx, student_id in enumerate(student_ids):
+        categories = ['Physics', 'Chemistry', 'Mathematics']
+        scores = [physics_scores[idx], chemistry_scores[idx], mathematics_scores[idx]]
+
+        # Radar chart requires the number of categories to be closed loop
+        scores += scores[:1]  # Close the loop for the chart
+        categories += categories[:1]  # Close the loop for categories
+
+        # Create radar chart
+        angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
+        angles += angles[:1]
+        
+        fig, ax = plt.subplots(figsize=(6, 6), dpi=100, subplot_kw=dict(polar=True))
+        ax.fill(angles, scores, color='orange', alpha=0.25)
+        ax.plot(angles, scores, color='orange', linewidth=2, linestyle='solid')
+        ax.set_yticklabels([])
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(categories, fontsize=12, fontweight='bold')
+        ax.set_title(f"Radar Chart for {student_id}", fontsize=16)
+        st.pyplot(fig)
