@@ -58,19 +58,6 @@ st.title("JEE Mock Test Score Analysis")
 
 # Select multiple student IDs
 student_ids = st.multiselect("Select Student IDs", options=data.columns[3:])
-if student_id:
-    # Calculate scores for each subject
-    physics_score = calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
-    chemistry_score = calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
-    mathematics_score = calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
-
-    # Display scores
-    st.subheader("Scores")
-    st.write(f"Physics Score: {physics_score}")
-    st.write(f"Chemistry Score: {chemistry_score}")
-    st.write(f"Mathematics Score: {mathematics_score}")
-    total_score = physics_score + chemistry_score + mathematics_score
-    st.write(f"Total Score: {total_score} / 300")
 
 if student_ids:
     physics_scores = []
