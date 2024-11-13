@@ -24,27 +24,29 @@ MATHEMATICS_OPTIONAL = list(range(81, 91))    # Questions 81-90
 # Function to calculate scores based on rules
 def calculate_subject_score(data, student_id, required_questions, optional_questions):
     score = 0
-    attempted_optional = 0
 
     # Calculate required questions score
     for q in required_questions:
-        correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
-        student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
+        # Check if the question exists in the dataset
+        if q in data['Question_no'].values:
+            correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+            student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
 
-        if student_answer == correct_answer:
-            score += CORRECT_MARK
-        elif pd.isna(student_answer):  # Unattempted
-            score += UNATTEMPTED_MARK
-        else:  # Wrong answer
-            score += WRONG_MARK
+            if student_answer == correct_answer:
+                score += CORRECT_MARK
+            elif pd.isna(student_answer):  # Unattempted
+                score += UNATTEMPTED_MARK
+            else:  # Wrong answer
+                score += WRONG_MARK
 
     # Calculate optional questions score (considering the first 5 attempts only)
     optional_attempts = []
     for q in optional_questions:
-        student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
-        if not pd.isna(student_answer):  # Attempted question
-            optional_attempts.append((q, student_answer))
-            attempted_optional += 1
+        # Check if the question exists in the dataset
+        if q in data['Question_no'].values:
+            student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
+            if not pd.isna(student_answer):  # Attempted question
+                optional_attempts.append((q, student_answer))
 
     # Consider only the first 5 attempted optional questions
     optional_attempts = optional_attempts[:5]
@@ -61,7 +63,7 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
 st.title("JEE Mock Test Score Calculator")
 
 # Select student ID
-student_id = st.selectbox("Select Student ID", options=data.columns[3:])  # Assuming student IDs start from 4th column
+student_id = st.selectbox("Select Student ID", options=data.columns[3:])  # Assuming student IDs start from the 4th column
 
 if student_id:
     # Calculate scores for each subject
