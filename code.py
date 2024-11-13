@@ -102,18 +102,9 @@ if student_ids:
 
     # Subject-wise Average Comparison Plot
     st.subheader("Subject-wise Average Scores (Selected vs All Students)")
-    avg_physics_all_students = np.mean([
-        calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
-        for student_id in all_student_columns
-    ])
-    avg_chemistry_all_students = np.mean([
-        calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
-        for student_id in all_student_columns
-    ])
-    avg_mathematics_all_students = np.mean([
-        calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
-        for student_id in all_student_columns
-    ])
+    avg_physics_all_students = np.mean([calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL) for student_id in all_student_columns])
+    avg_chemistry_all_students = np.mean([calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL) for student_id in all_student_columns])
+    avg_mathematics_all_students = np.mean([calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL) for student_id in all_student_columns])
 
     avg_physics_selected = np.mean(physics_scores)
     avg_chemistry_selected = np.mean(chemistry_scores)
@@ -131,20 +122,10 @@ if student_ids:
     bars2 = ax.bar(x + width/2, avg_selected_students, width, label='Selected Students', color='orange')
 
     for bar in bars1:
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 2,
-            f'{bar.get_height():.2f}',
-            ha='center', color='black', fontweight='bold'
-        )
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2, f'{bar.get_height():.2f}', ha='center', color='black', fontweight='bold')
 
     for bar in bars2:
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 2,
-            f'{bar.get_height():.2f}',
-            ha='center', color='black', fontweight='bold'
-        )
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2, f'{bar.get_height():.2f}', ha='center', color='black', fontweight='bold')
 
     ax.set_xlabel("Subjects")
     ax.set_ylabel("Average Scores")
@@ -156,22 +137,17 @@ if student_ids:
 
     # Subject-wise Performance Comparison - Side-by-Side Column Chart
     st.subheader("Subject-wise Performance Comparison (Side-by-Side Column Chart)")
-
-    # Ensure the lists match the length of student_ids
     if len(student_ids) == len(physics_scores) == len(chemistry_scores) == len(mathematics_scores):
         subjects = ['Physics', 'Chemistry', 'Mathematics']
         subject_scores = [physics_scores, chemistry_scores, mathematics_scores]
-
-        # Create a side-by-side bar chart
-        width = 0.25  # Width of bars
-        x = np.arange(len(student_ids))  # Position of bars on x-axis
+        width = 0.25
+        x = np.arange(len(student_ids))
 
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.bar(x - width, physics_scores, width, label='Physics', color='blue')
         ax.bar(x, chemistry_scores, width, label='Chemistry', color='green')
         ax.bar(x + width, mathematics_scores, width, label='Mathematics', color='orange')
 
-        # Label the bars with their scores
         for i, v in enumerate(physics_scores):
             ax.text(x[i] - width, v + 1, str(v), ha='center', fontweight='bold')
         for i, v in enumerate(chemistry_scores):
@@ -188,115 +164,36 @@ if student_ids:
         st.pyplot(fig)
 
     # Chapter-wise Average Score Analysis
-        # Chapter-wise Average Score Analysis
-    # Chapter-wise Average Score Analysis
-st.subheader("Chapter-wise Average Score Analysis")
+    st.subheader("Chapter-wise Average Score Analysis")
+    chapter_scores = {}
+    chapter_question_counts = {}
 
-# Create a dictionary to store chapter-wise scores
-chapter_scores = {}
-chapter_question_counts = {}
-
-# Iterate through the questions in the data and calculate the scores for each chapter
-for student_id in student_ids:
-    for q in data['Question_no']:
-        # Get the chapter name directly from the 'Chapter_name' column
-        chapter = data.loc[data['Question_no'] == q, 'Chapter_name'].values[0]
-        correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
-        student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
-
-        # Update chapter scores and counts
-        if chapter not in chapter_scores:
-            chapter_scores[chapter] = 0
-            chapter_question_counts[chapter] = 0
-
-        if student_answer == correct_answer:
-            chapter_scores[chapter] += CORRECT_MARK
-        elif pd.isna(student_answer):
-            chapter_scores[chapter] += UNATTEMPTED_MARK
-        else:
-            chapter_scores[chapter] += WRONG_MARK
-
-        chapter_question_counts[chapter] += 1
-
-# Calculate average score per chapter
-chapter_avg_scores = {
-    chapter: chapter_scores[chapter] / chapter_question_counts[chapter] 
-    for chapter in chapter_scores
-}
-
-# Plot Chapter-wise Average Scores
-chapters = list(chapter_avg_scores.keys())
-avg_scores = list(chapter_avg_scores.values())
-
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.barh(chapters, avg_scores, color='teal')
-
-ax.set_xlabel("Average Score")
-ax.set_ylabel("Chapters")
-ax.set_title("Chapter-wise Average Scores")
-
-# Display the plot
-st.pyplot(fig)
-
-# Chapter-wise Question Distribution for Physics, Chemistry, and Mathematics
-st.subheader("Chapter-wise Question Distribution for Physics, Chemistry, and Mathematics")
-
-# Function to calculate the number of questions per chapter for each subject
-import streamlit as st
-import matplotlib.pyplot as plt
-
-# Function to calculate the number of questions per chapter for each subject
-import streamlit as st
-import matplotlib.pyplot as plt
-
-# Function to calculate the number of questions per chapter for each subject
-def chapter_question_distribution(subject_required, subject_optional):
-    # Combine required and optional questions for the subject
-    subject_questions = subject_required + subject_optional
-    chapter_counts = {}
-
-    for q in subject_questions:
-        if q in data['Question_no'].values:
+    for student_id in student_ids:
+        for q in data['Question_no']:
             chapter = data.loc[data['Question_no'] == q, 'Chapter_name'].values[0]
-            if chapter not in chapter_counts:
-                chapter_counts[chapter] = 0
-            chapter_counts[chapter] += 1
+            correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+            student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
 
-    return chapter_counts
+            if chapter not in chapter_scores:
+                chapter_scores[chapter] = 0
+                chapter_question_counts[chapter] = 0
 
-# Get chapter-wise question distribution for each subject
-physics_chapter_distribution = chapter_question_distribution(PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
-chemistry_chapter_distribution = chapter_question_distribution(CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
-mathematics_chapter_distribution = chapter_question_distribution(MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
+            if student_answer == correct_answer:
+                chapter_scores[chapter] += CORRECT_MARK
+            elif pd.isna(student_answer):
+                chapter_scores[chapter] += UNATTEMPTED_MARK
+            else:
+                chapter_scores[chapter] += WRONG_MARK
 
-# List of subjects and their respective chapter distributions
-subjects = ['Physics', 'Chemistry', 'Mathematics']
-chapter_distributions = [physics_chapter_distribution, chemistry_chapter_distribution, mathematics_chapter_distribution]
+            chapter_question_counts[chapter] += 1
 
-# Streamlit UI for subject navigation
-subject_selection = st.selectbox("Select Subject", options=subjects)
+    avg_chapter_scores = {chapter: chapter_scores[chapter] / chapter_question_counts[chapter] for chapter in chapter_scores}
 
-# Determine which subject's chapter distribution to plot
-if subject_selection == 'Physics':
-    chapter_distribution = physics_chapter_distribution
-elif subject_selection == 'Chemistry':
-    chapter_distribution = chemistry_chapter_distribution
-else:
-    chapter_distribution = mathematics_chapter_distribution
+    sorted_chapter_scores = sorted(avg_chapter_scores.items(), key=lambda x: x[1], reverse=True)
+    chapters, avg_scores = zip(*sorted_chapter_scores)
 
-# Plot the selected subject's chapter distribution
-fig, ax = plt.subplots(figsize=(10, 6))
-
-ax.bar(chapter_distribution.keys(), chapter_distribution.values(), color='teal')
-ax.set_title(f"{subject_selection} Chapter-wise Question Distribution")
-ax.set_xlabel("Chapters")
-ax.set_ylabel("Number of Questions")
-
-# Rotate x-axis labels and align them
-ax.set_xticklabels(chapter_distribution.keys(), rotation=45, ha='right')
-
-# Display the plot
-st.pyplot(fig)
-
-
-
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.barh(chapters, avg_scores, color='purple')
+    ax.set_xlabel("Average Score")
+    ax.set_title("Chapter-wise Average Score Comparison")
+    st.pyplot(fig)
