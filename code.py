@@ -237,3 +237,57 @@ ax.set_title("Chapter-wise Average Scores")
 
 # Display the plot
 st.pyplot(fig)
+
+# Chapter-wise Question Distribution for Physics, Chemistry, and Mathematics
+st.subheader("Chapter-wise Question Distribution for Physics, Chemistry, and Mathematics")
+
+# Function to calculate the number of questions per chapter for each subject
+def chapter_question_distribution(subject_required, subject_optional):
+    # Combine required and optional questions for the subject
+    subject_questions = subject_required + subject_optional
+    chapter_counts = {}
+
+    for q in subject_questions:
+        if q in data['Question_no'].values:
+            chapter = data.loc[data['Question_no'] == q, 'Chapter_name'].values[0]
+            if chapter not in chapter_counts:
+                chapter_counts[chapter] = 0
+            chapter_counts[chapter] += 1
+
+    return chapter_counts
+
+# Get chapter-wise question distribution for each subject
+physics_chapter_distribution = chapter_question_distribution(PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
+chemistry_chapter_distribution = chapter_question_distribution(CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
+mathematics_chapter_distribution = chapter_question_distribution(MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
+
+# Plot Chapter-wise Question Distribution for each subject
+subjects = ['Physics', 'Chemistry', 'Mathematics']
+chapter_distributions = [physics_chapter_distribution, chemistry_chapter_distribution, mathematics_chapter_distribution]
+
+# Set up the plot
+fig, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
+
+# Physics Chapter Distribution Plot
+axes[0].bar(physics_chapter_distribution.keys(), physics_chapter_distribution.values(), color='blue')
+axes[0].set_title("Physics Chapter-wise Question Distribution")
+axes[0].set_xlabel("Chapters")
+axes[0].set_ylabel("Number of Questions")
+axes[0].tick_params(axis='x', rotation=45)
+
+# Chemistry Chapter Distribution Plot
+axes[1].bar(chemistry_chapter_distribution.keys(), chemistry_chapter_distribution.values(), color='green')
+axes[1].set_title("Chemistry Chapter-wise Question Distribution")
+axes[1].set_xlabel("Chapters")
+axes[1].tick_params(axis='x', rotation=45)
+
+# Mathematics Chapter Distribution Plot
+axes[2].bar(mathematics_chapter_distribution.keys(), mathematics_chapter_distribution.values(), color='orange')
+axes[2].set_title("Mathematics Chapter-wise Question Distribution")
+axes[2].set_xlabel("Chapters")
+axes[2].tick_params(axis='x', rotation=45)
+
+# Display the plot
+plt.tight_layout()
+st.pyplot(fig)
+
