@@ -111,8 +111,16 @@ if student_ids:
     st.subheader("Total Score Distribution (Bar Plot)")
     plt.figure(figsize=(10, 6))
     plt.bar(student_ids, total_scores, color='purple', label='Total Scores')
+
+    # Plot average lines and display average values above the lines
     plt.axhline(avg_all_students, color='red', linestyle='--', linewidth=1.5, label='Average for All Students')
     plt.axhline(avg_selected_students, color='blue', linestyle='--', linewidth=1.5, label='Average for Selected Students')
+
+    # Adding text for average values above each line
+    plt.text(len(student_ids) - 0.5, avg_all_students + 5, f"{avg_all_students:.2f}", color='red', ha='center', fontweight='bold')
+    plt.text(len(student_ids) - 0.5, avg_selected_students + 5, f"{avg_selected_students:.2f}", color='blue', ha='center', fontweight='bold')
+
+    # Labels and legend
     plt.xlabel("Student IDs")
     plt.ylabel("Total Score")
     plt.title("Total Score Comparison Across Students")
