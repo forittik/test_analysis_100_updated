@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # Load data from the CSV file (assuming it's named 'data.csv')
 # Sample data has columns: Question_no, correct_answer_key, Chapter_name, S001, S002, ..., S010, ...
-data = pd.read_csv('data.csv')
+data = pd.read_csv('https://raw.githubusercontent.com/forittik/test_analysis_100_updated/refs/heads/main/final_mereged_data.csv')
 
 # Set up constants
 CORRECT_MARK = 4
