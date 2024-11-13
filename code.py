@@ -186,3 +186,6 @@ if student_ids:
         ax.set_xticklabels(student_ids)
         ax.legend()
         st.pyplot(fig)
+
+    # Chapter-wise Average Score Analysis
+    st.subheader("
