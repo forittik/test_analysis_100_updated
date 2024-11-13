@@ -1,129 +1,89 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
 import matplotlib.pyplot as plt
 
-# Load the data
-df = pd.read_csv('https://raw.githubusercontent.com/forittik/test_analysis_100_updated/refs/heads/main/final_mereged_data.csv')
+# Load data from the CSV file (assuming it's named 'data.csv')
+# Sample data has columns: Question_no, correct_answer_key, Chapter_name, S001, S002, ..., S010, ...
+data = pd.read_csv('data.csv')
 
-# Get the column names
-columns = df.columns
+# Set up constants
+CORRECT_MARK = 4
+WRONG_MARK = -1
+UNATTEMPTED_MARK = 0
 
-# Find the student IDs
-student_ids = []
-for col in columns[3:]:
-    if df[col].iloc[0] != 0:
-        student_ids.append(col)
-    else:
-        break
+# Define question ranges for each subject
+PHYSICS_REQUIRED = list(range(1, 21))         # Questions 1-20
+PHYSICS_OPTIONAL = list(range(21, 31))        # Questions 21-30
 
-# Select the student
-student_id = st.selectbox('Select Student ID', student_ids)
+CHEMISTRY_REQUIRED = list(range(31, 51))      # Questions 31-50
+CHEMISTRY_OPTIONAL = list(range(51, 61))      # Questions 51-60
 
-# Define the subject start and end indices
-physics_start, physics_end = 0, 20
-chemistry_start, chemistry_end = 30, 50
-math_start, math_end = 60, 80
-optional_physics_start, optional_physics_end = 20, 30
-optional_chemistry_start, optional_chemistry_end = 50, 60
-optional_math_start, optional_math_end = 80, 90
+MATHEMATICS_REQUIRED = list(range(61, 81))    # Questions 61-80
+MATHEMATICS_OPTIONAL = list(range(81, 91))    # Questions 81-90
 
-# Ensure the indices do not exceed the row count of the DataFrame
-num_rows = df.shape[0]
-physics_end = min(physics_end, num_rows)
-chemistry_end = min(chemistry_end, num_rows)
-math_end = min(math_end, num_rows)
-optional_physics_end = min(optional_physics_end, num_rows)
-optional_chemistry_end = min(optional_chemistry_end, num_rows)
-optional_math_end = min(optional_math_end, num_rows)
+# Function to calculate scores based on rules
+def calculate_subject_score(data, student_id, required_questions, optional_questions):
+    score = 0
+    attempted_optional = 0
 
-# Calculate the marks for Physics
-physics_marks = 0
-for i in range(physics_start, physics_end):
-    if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-        physics_marks += 4
-    elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
-        physics_marks -= 1
+    # Calculate required questions score
+    for q in required_questions:
+        correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+        student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
 
-optional_physics_attempted = 0
-for i in range(optional_physics_start, optional_physics_end):
-    if df.loc[i, student_id] != 0:
-        optional_physics_attempted += 1
+        if student_answer == correct_answer:
+            score += CORRECT_MARK
+        elif pd.isna(student_answer):  # Unattempted
+            score += UNATTEMPTED_MARK
+        else:  # Wrong answer
+            score += WRONG_MARK
 
-if optional_physics_attempted > 5:
-    for i in range(optional_physics_start, min(optional_physics_start + 5, optional_physics_end)):
-        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-            physics_marks += 4
-        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key']:
-            physics_marks -= 1
-else:
-    for i in range(optional_physics_start, optional_physics_end):
-        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-            physics_marks += 4
-        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
-            physics_marks -= 1
+    # Calculate optional questions score (considering the first 5 attempts only)
+    optional_attempts = []
+    for q in optional_questions:
+        student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
+        if not pd.isna(student_answer):  # Attempted question
+            optional_attempts.append((q, student_answer))
+            attempted_optional += 1
 
-# Calculate the marks for Chemistry
-chemistry_marks = 0
-for i in range(chemistry_start, chemistry_end):
-    if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-        chemistry_marks += 4
-    elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
-        chemistry_marks -= 1
+    # Consider only the first 5 attempted optional questions
+    optional_attempts = optional_attempts[:5]
+    for q, student_answer in optional_attempts:
+        correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+        if student_answer == correct_answer:
+            score += CORRECT_MARK
+        else:
+            score += WRONG_MARK
 
-optional_chemistry_attempted = 0
-for i in range(optional_chemistry_start, optional_chemistry_end):
-    if df.loc[i, student_id] != 0:
-        optional_chemistry_attempted += 1
+    return score
 
-if optional_chemistry_attempted > 5:
-    for i in range(optional_chemistry_start, min(optional_chemistry_start + 5, optional_chemistry_end)):
-        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-            chemistry_marks += 4
-        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key']:
-            chemistry_marks -= 1
-else:
-    for i in range(optional_chemistry_start, optional_chemistry_end):
-        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-            chemistry_marks += 4
-        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
-            chemistry_marks -= 1
+# Streamlit UI
+st.title("JEE Mock Test Score Calculator")
 
-# Calculate the marks for Mathematics
-math_marks = 0
-for i in range(math_start, math_end):
-    if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-        math_marks += 4
-    elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
-        math_marks -= 1
+# Select student ID
+student_id = st.selectbox("Select Student ID", options=data.columns[3:])  # Assuming student IDs start from 4th column
 
-optional_math_attempted = 0
-for i in range(optional_math_start, optional_math_end):
-    if df.loc[i, student_id] != 0:
-        optional_math_attempted += 1
+if student_id:
+    # Calculate scores for each subject
+    physics_score = calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
+    chemistry_score = calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
+    mathematics_score = calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
 
-if optional_math_attempted > 5:
-    for i in range(optional_math_start, min(optional_math_start + 5, optional_math_end)):
-        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-            math_marks += 4
-        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key']:
-            math_marks -= 1
-else:
-    for i in range(optional_math_start, optional_math_end):
-        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
-            math_marks += 4
-        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
-            math_marks -= 1
+    # Display scores
+    st.subheader("Scores")
+    st.write(f"Physics Score: {physics_score}")
+    st.write(f"Chemistry Score: {chemistry_score}")
+    st.write(f"Mathematics Score: {mathematics_score}")
+    total_score = physics_score + chemistry_score + mathematics_score
+    st.write(f"Total Score: {total_score} / 300")
 
-# Display the results
-st.write(f"Physics Marks: {physics_marks}")
-st.write(f"Chemistry Marks: {chemistry_marks}")
-st.write(f"Mathematics Marks: {math_marks}")
-st.write(f"Total Marks: {physics_marks + chemistry_marks + math_marks}")
-
-# Plot the results
-fig, ax = plt.subplots()
-ax.bar(['Physics', 'Chemistry', 'Mathematics'], [physics_marks, chemistry_marks, math_marks])
-ax.set_title(f"{student_id} Marks")
-ax.set_xlabel("Subject")
-ax.set_ylabel("Marks")
-st.pyplot(fig)
+    # Plot results in a bar chart
+    subjects = ['Physics', 'Chemistry', 'Mathematics']
+    scores = [physics_score, chemistry_score, mathematics_score]
+    plt.figure(figsize=(10, 6))
+    plt.bar(subjects, scores, color=['blue', 'green', 'orange'])
+    plt.xlabel("Subjects")
+    plt.ylabel("Scores")
+    plt.title("Subject-wise Scores")
+    plt.ylim(0, 100)  # Assuming a max score of 100 per subject
+    st.pyplot(plt)
