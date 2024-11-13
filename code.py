@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 
 # Load data from the CSV file
@@ -28,65 +29,79 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
     # Calculate required questions score
     for q in required_questions:
         if q in data['Question_no'].values:
-            # Get correct answer for the question
             correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
-            # Get the student's answer for the question
             student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
 
-            # Compare student's answer with the correct answer
             if student_answer == correct_answer:
-                score += CORRECT_MARK  # Correct answer
-            elif pd.isna(student_answer):  # Unattempted question
+                score += CORRECT_MARK
+            elif pd.isna(student_answer):
                 score += UNATTEMPTED_MARK
-            else:  # Wrong answer
+            else:
                 score += WRONG_MARK
 
-    # Handle optional questions scoring:
+    # Calculate optional questions score
     optional_attempts = []
     for q in optional_questions:
         if q in data['Question_no'].values:
             student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
-            if not pd.isna(student_answer):  # Attempted question
+            if not pd.isna(student_answer):
                 optional_attempts.append((q, student_answer))
 
-    # Compare the student's answers with the correct answers for all attempted optional questions
     for q, student_answer in optional_attempts:
         correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
-        
-        if student_answer == correct_answer:
-            score += CORRECT_MARK  # Correct answer
-        else:
-            score += WRONG_MARK  # Incorrect answer
+        score += CORRECT_MARK if student_answer == correct_answer else WRONG_MARK
 
-    # Ensure the score does not exceed the maximum score of 100 for each subject
     return min(score, 100)
 
 # Streamlit UI
-st.title("JEE Mock Test Score Calculator")
+st.title("JEE Mock Test Score Analysis")
 
 # Select multiple student IDs
-student_ids = st.multiselect("Select Student IDs", options=data.columns[3:])  # Assuming student IDs start from the 4th column
+student_ids = st.multiselect("Select Student IDs", options=data.columns[3:])
 
 if student_ids:
-    # Initialize score lists for each student
     physics_scores = []
     chemistry_scores = []
     mathematics_scores = []
+    total_scores = []
 
-    # Loop through each selected student
     for student_id in student_ids:
-        # Calculate scores for each subject
         physics_score = calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
         chemistry_score = calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
         mathematics_score = calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
 
-        # Append the results to the lists
         physics_scores.append(physics_score)
         chemistry_scores.append(chemistry_score)
         mathematics_scores.append(mathematics_score)
+        total_scores.append(physics_score + chemistry_score + mathematics_score)
 
-    # Calculate average scores for each subject across all students
-    all_student_columns = data.columns[3:]  # Assuming student data starts from the 4th column
+    all_student_columns = data.columns[3:]
+    all_total_scores = [
+        calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL) +
+        calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL) +
+        calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
+        for student_id in all_student_columns
+    ]
+    avg_all_students = np.mean(all_total_scores)
+    avg_selected_students = np.mean(total_scores)
+
+    # Total Score Distribution - Bar Plot with Average Lines
+    st.subheader("Total Score Distribution (Bar Plot)")
+    plt.figure(figsize=(10, 6))
+    plt.bar(student_ids, total_scores, color='purple', label='Total Scores')
+    plt.axhline(avg_all_students, color='red', linestyle='--', linewidth=1.5, label='Average for All Students')
+    plt.axhline(avg_selected_students, color='blue', linestyle='--', linewidth=1.5, label='Average for Selected Students')
+    plt.text(len(student_ids) - 0.5, avg_all_students + 5, f"{avg_all_students:.2f}", color='red', ha='center', fontweight='bold')
+    plt.text(len(student_ids) - 0.5, avg_selected_students + 5, f"{avg_selected_students:.2f}", color='blue', ha='center', fontweight='bold')
+    plt.xlabel("Student IDs")
+    plt.ylabel("Total Score")
+    plt.title("Total Score Comparison Across Students")
+    plt.ylim(0, 300)
+    plt.legend()
+    st.pyplot(plt)
+
+    # Subject-wise Average Comparison Plot
+    st.subheader("Subject-wise Average Scores (Selected vs All Students)")
     avg_physics_all_students = np.mean([
         calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
         for student_id in all_student_columns
@@ -100,26 +115,21 @@ if student_ids:
         for student_id in all_student_columns
     ])
 
-    # Calculate average scores for selected students
     avg_physics_selected = np.mean(physics_scores)
     avg_chemistry_selected = np.mean(chemistry_scores)
     avg_mathematics_selected = np.mean(mathematics_scores)
-
-    # Subject-wise Average Comparison Plot
-    st.subheader("Subject-wise Average Scores (Selected vs All Students)")
 
     subjects = ['Physics', 'Chemistry', 'Mathematics']
     avg_all_students = [avg_physics_all_students, avg_chemistry_all_students, avg_mathematics_all_students]
     avg_selected_students = [avg_physics_selected, avg_chemistry_selected, avg_mathematics_selected]
 
-    x = np.arange(len(subjects))  # label locations
-    width = 0.35  # width of the bars
+    x = np.arange(len(subjects))
+    width = 0.35
 
     fig, ax = plt.subplots(figsize=(10, 6))
     bars1 = ax.bar(x - width/2, avg_all_students, width, label='All Students', color='skyblue')
     bars2 = ax.bar(x + width/2, avg_selected_students, width, label='Selected Students', color='orange')
 
-    # Adding the average values above each bar
     for bar in bars1:
         ax.text(
             bar.get_x() + bar.get_width() / 2,
@@ -136,12 +146,10 @@ if student_ids:
             ha='center', color='black', fontweight='bold'
         )
 
-    # Labeling and display
     ax.set_xlabel("Subjects")
     ax.set_ylabel("Average Scores")
     ax.set_title("Average Scores by Subject for All Students vs Selected Students")
     ax.set_xticks(x)
     ax.set_xticklabels(subjects)
     ax.legend()
-
     st.pyplot(fig)
