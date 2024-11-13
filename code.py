@@ -32,6 +32,9 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
             # Get the student's answer for the question
             student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
 
+            # Debugging: Print the student's answer and correct answer
+            st.write(f"Required Question {q}: Student Answer: {student_answer}, Correct Answer: {correct_answer}")
+
             # Compare student's answer with the correct answer
             if student_answer == correct_answer:
                 score += CORRECT_MARK  # Correct answer
@@ -51,10 +54,16 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
     # Only consider the first 5 attempted questions from optional
     optional_attempts = optional_attempts[:5]
 
+    # Debugging: Print the optional attempts being considered
+    st.write(f"Optional Attempts (Limited to 5) for {student_id}: {optional_attempts}")
+
     # Compare the student's answers with the correct answers for the first 5 optional attempts
     for q, student_answer in optional_attempts:
         correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
-        
+
+        # Debugging: Print the student's answer and correct answer for optional questions
+        st.write(f"Optional Question {q}: Student Answer: {student_answer}, Correct Answer: {correct_answer}")
+
         if student_answer == correct_answer:
             score += CORRECT_MARK  # Correct answer
         else:
@@ -92,3 +101,4 @@ if student_id:
     plt.title("Subject-wise Scores")
     plt.ylim(0, 100)  # Assuming a max score of 100 per subject
     st.pyplot(plt)
+
