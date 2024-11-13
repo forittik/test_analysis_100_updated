@@ -39,8 +39,9 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
             else:  # Wrong answer
                 score += WRONG_MARK
 
-    # Calculate optional questions score (considering the first 5 attempted only)
+    # Handle optional questions scoring:
     optional_attempts = []
+    
     for q in optional_questions:
         # Check if the question exists in the dataset
         if q in data['Question_no'].values:
@@ -48,9 +49,11 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
             if not pd.isna(student_answer):  # Attempted question
                 optional_attempts.append((q, student_answer))
 
-    # Consider only the first 5 attempted optional questions (correct or incorrect)
-    optional_attempts = optional_attempts[:5]
-    
+    # If more than 5 optional questions were attempted, only consider the first 5
+    if len(optional_attempts) > 5:
+        optional_attempts = optional_attempts[:5]
+
+    # Calculate score for the selected optional questions
     for q, student_answer in optional_attempts:
         correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
         if student_answer == correct_answer:
@@ -90,3 +93,4 @@ if student_id:
     plt.title("Subject-wise Scores")
     plt.ylim(0, 100)  # Assuming a max score of 100 per subject
     st.pyplot(plt)
+
