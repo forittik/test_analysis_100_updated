@@ -155,7 +155,7 @@ if student_ids:
         fig, ax = plt.subplots(figsize=(6, 6), dpi=100, subplot_kw=dict(polar=True))
         ax.fill(angles, scores, color='orange', alpha=0.25)
         ax.plot(angles, scores, color='orange', linewidth=2, linestyle='solid')
-        ax.set_yticklabels([])
+        ax.set_yticklabels([])  # Hide radial ticks
         ax.set_xticks(angles[:-1])
         ax.set_xticklabels(categories, fontsize=12, fontweight='bold')
         ax.set_title(f"Radar Chart for {student_id}", fontsize=16)
