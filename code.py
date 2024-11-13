@@ -27,12 +27,15 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
     # Calculate required questions score
     for q in required_questions:
         if q in data['Question_no'].values:
+            # Get correct answer for the question
             correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+            # Get the student's answer for the question
             student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
 
+            # Compare student's answer with the correct answer
             if student_answer == correct_answer:
-                score += CORRECT_MARK
-            elif pd.isna(student_answer):  # Unattempted
+                score += CORRECT_MARK  # Correct answer
+            elif pd.isna(student_answer):  # Unattempted question
                 score += UNATTEMPTED_MARK
             else:  # Wrong answer
                 score += WRONG_MARK
@@ -45,21 +48,17 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
             if not pd.isna(student_answer):  # Attempted question
                 optional_attempts.append((q, student_answer))
 
-    # Debug: Show the optional attempts (first 5)
-    st.write(f"Optional Attempts for {student_id}: {optional_attempts[:5]}")
+    # Only consider the first 5 attempted questions from optional
+    optional_attempts = optional_attempts[:5]
 
-    # If more than 5 optional questions are attempted, consider only the first 5
-    optional_attempts = optional_attempts[:5]  # Only the first 5 attempted questions
-
-    # Debug: Check if the scoring logic is correctly considering the first 5 attempts
-    st.write(f"Optional Attempts (Limited to 5): {optional_attempts}")
-
+    # Compare the student's answers with the correct answers for the first 5 optional attempts
     for q, student_answer in optional_attempts:
         correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+        
         if student_answer == correct_answer:
-            score += CORRECT_MARK
+            score += CORRECT_MARK  # Correct answer
         else:
-            score += WRONG_MARK
+            score += WRONG_MARK  # Incorrect answer
 
     return score
 
