@@ -141,25 +141,22 @@ if student_ids:
         ax.legend()
         st.pyplot(fig)
 
-    # Radar Chart for Individual Student Performance Across Subjects
-    st.subheader("Radar Chart of Subject-wise Performance (For Each Student)")
-    for idx, student_id in enumerate(student_ids):
-        categories = ['Physics', 'Chemistry', 'Mathematics']
-        scores = [physics_scores[idx], chemistry_scores[idx], mathematics_scores[idx]]
+    # Scatter Plot for Student Performance Across Subjects
+    st.subheader("Scatter Plot of Student Performance Across Subjects")
 
-        # Radar chart requires the number of categories to be closed loop
-        scores += scores[:1]  # Close the loop for the chart
-        categories += categories[:1]  # Close the loop for categories
+    # Prepare data for the scatter plot
+    x = np.arange(len(student_ids))  # Student IDs as x-axis
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-        # Create radar chart
-        angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
-        angles += angles[:1]
-        
-        fig, ax = plt.subplots(figsize=(6, 6), dpi=100, subplot_kw=dict(polar=True))
-        ax.fill(angles, scores, color='orange', alpha=0.25)
-        ax.plot(angles, scores, color='orange', linewidth=2, linestyle='solid')
-        ax.set_yticklabels([])  # Hide radial ticks
-        ax.set_xticks(angles[:-1])
-        ax.set_xticklabels(categories, fontsize=12, fontweight='bold')
-        ax.set_title(f"Radar Chart for {student_id}", fontsize=16)
-        st.pyplot(fig)
+    # Scatter plot for Physics, Chemistry, and Mathematics
+    ax.scatter(x, physics_scores, color='blue', label='Physics', s=100, marker='o')
+    ax.scatter(x, chemistry_scores, color='green', label='Chemistry', s=100, marker='^')
+    ax.scatter(x, mathematics_scores, color='orange', label='Mathematics', s=100, marker='s')
+
+    ax.set_xlabel("Student IDs")
+    ax.set_ylabel("Scores")
+    ax.set_title("Scatter Plot of Student Performance Across Subjects")
+    ax.set_xticks(x)
+    ax.set_xticklabels(student_ids)
+    ax.legend()
+    st.pyplot(fig)
