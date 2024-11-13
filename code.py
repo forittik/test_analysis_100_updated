@@ -19,7 +19,7 @@ for col in columns[3:]:
 # Select the student
 student_id = st.selectbox('Select Student ID', student_ids)
 
-# Get the subject start and end indices
+# Define the subject start and end indices
 physics_start, physics_end = 0, 20
 chemistry_start, chemistry_end = 30, 50
 math_start, math_end = 60, 80
@@ -53,7 +53,57 @@ else:
         elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
             physics_marks -= 1
 
-# Calculate the marks for Chemistry and Mathematics in a similar way
+# Calculate the marks for Chemistry
+chemistry_marks = 0
+for i in range(chemistry_start, chemistry_end):
+    if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
+        chemistry_marks += 4
+    elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
+        chemistry_marks -= 1
+
+optional_chemistry_attempted = 0
+for i in range(optional_chemistry_start, optional_chemistry_end):
+    if df.loc[i, student_id] != 0:
+        optional_chemistry_attempted += 1
+
+if optional_chemistry_attempted > 5:
+    for i in range(optional_chemistry_start, optional_chemistry_start + 5):
+        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
+            chemistry_marks += 4
+        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key']:
+            chemistry_marks -= 1
+else:
+    for i in range(optional_chemistry_start, optional_chemistry_end):
+        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
+            chemistry_marks += 4
+        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
+            chemistry_marks -= 1
+
+# Calculate the marks for Mathematics
+math_marks = 0
+for i in range(math_start, math_end):
+    if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
+        math_marks += 4
+    elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
+        math_marks -= 1
+
+optional_math_attempted = 0
+for i in range(optional_math_start, optional_math_end):
+    if df.loc[i, student_id] != 0:
+        optional_math_attempted += 1
+
+if optional_math_attempted > 5:
+    for i in range(optional_math_start, optional_math_start + 5):
+        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
+            math_marks += 4
+        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key']:
+            math_marks -= 1
+else:
+    for i in range(optional_math_start, optional_math_end):
+        if df.loc[i, student_id] == df.loc[i, 'correct_answer_key']:
+            math_marks += 4
+        elif df.loc[i, student_id] != df.loc[i, 'correct_answer_key'] and df.loc[i, student_id] != 0:
+            math_marks -= 1
 
 # Display the results
 st.write(f"Physics Marks: {physics_marks}")
