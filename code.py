@@ -65,6 +65,7 @@ if student_ids:
     mathematics_scores = []
     total_scores = []
 
+    # Loop through selected students and calculate scores
     for student_id in student_ids:
         physics_score = calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
         chemistry_score = calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
@@ -74,6 +75,18 @@ if student_ids:
         chemistry_scores.append(chemistry_score)
         mathematics_scores.append(mathematics_score)
         total_scores.append(physics_score + chemistry_score + mathematics_score)
+
+    # Display score format for each selected student
+    for i, student_id in enumerate(student_ids):
+        st.subheader(f"Scores of {student_id}")
+        st.write(f"Physics Score: {physics_scores[i]}")
+        st.write(f"Chemistry Score: {chemistry_scores[i]}")
+        st.write(f"Mathematics Score: {mathematics_scores[i]}")
+        st.write(f"Total Score: {total_scores[i]} / 300")
+        st.write("---")
+
+    # The rest of your existing code for plotting can remain as it is
+
 
     all_student_columns = data.columns[3:]
     all_total_scores = [
