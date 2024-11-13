@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-# Load data from the CSV file (assuming it's named 'data.csv')
+# Load data from the CSV file
 data = pd.read_csv('https://raw.githubusercontent.com/forittik/test_analysis_100_updated/refs/heads/main/final_mereged_data.csv')
 
 # Set up constants
@@ -88,7 +88,18 @@ if student_ids:
         mathematics_scores.append(mathematics_score)
         total_scores.append(physics_score + chemistry_score + mathematics_score)
 
-    # Display scores for each student
+    # Calculate average total scores
+    all_student_columns = data.columns[3:]  # Assuming student data starts from the 4th column
+    all_total_scores = [
+        calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL) +
+        calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL) +
+        calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
+        for student_id in all_student_columns
+    ]
+    avg_all_students = np.mean(all_total_scores)
+    avg_selected_students = np.mean(total_scores)
+
+    # Display scores for each selected student
     for idx, student_id in enumerate(student_ids):
         st.subheader(f"Scores for {student_id}")
         st.write(f"Physics Score: {physics_scores[idx]}")
@@ -96,14 +107,17 @@ if student_ids:
         st.write(f"Mathematics Score: {mathematics_scores[idx]}")
         st.write(f"Total Score: {total_scores[idx]} / 300")
 
-    # Total Score Distribution - Bar Plot
+    # Total Score Distribution - Bar Plot with Average Lines
     st.subheader("Total Score Distribution (Bar Plot)")
     plt.figure(figsize=(10, 6))
-    plt.bar(student_ids, total_scores, color='purple')
+    plt.bar(student_ids, total_scores, color='purple', label='Total Scores')
+    plt.axhline(avg_all_students, color='red', linestyle='--', linewidth=1.5, label='Average for All Students')
+    plt.axhline(avg_selected_students, color='blue', linestyle='--', linewidth=1.5, label='Average for Selected Students')
     plt.xlabel("Student IDs")
     plt.ylabel("Total Score")
     plt.title("Total Score Comparison Across Students")
     plt.ylim(0, 300)  # Max total score of 300
+    plt.legend()
     st.pyplot(plt)
 
     # Subject-wise Performance Comparison - Side-by-Side Column Chart
@@ -130,4 +144,3 @@ if student_ids:
         ax.set_xticklabels(student_ids)
         ax.legend()
         st.pyplot(fig)
-
