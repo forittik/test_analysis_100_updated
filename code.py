@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Load data from the CSV file (assuming it's named 'data.csv')
 data = pd.read_csv('https://raw.githubusercontent.com/forittik/test_analysis_100_updated/refs/heads/main/final_mereged_data.csv')
@@ -32,11 +33,11 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
             # Get the student's answer for the question
             student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
 
-            # Compare student's answer with the correct answer
-            if student_answer == correct_answer:
-                score += CORRECT_MARK  # Correct answer
-            elif pd.isna(student_answer):  # Unattempted question
+            # Handle possible data type inconsistencies (convert answers to str for comparison)
+            if pd.isna(student_answer):  # Unattempted question
                 score += UNATTEMPTED_MARK
+            elif str(student_answer) == str(correct_answer):  # Correct answer
+                score += CORRECT_MARK
             else:  # Wrong answer
                 score += WRONG_MARK
 
@@ -55,7 +56,8 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
     for q, student_answer in optional_attempts:
         correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
 
-        if student_answer == correct_answer:
+        # Handle possible data type inconsistencies (convert answers to str for comparison)
+        if str(student_answer) == str(correct_answer):
             score += CORRECT_MARK  # Correct answer
         else:
             score += WRONG_MARK  # Incorrect answer
