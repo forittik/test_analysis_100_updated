@@ -3,7 +3,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 
 # Load the data
-df = pd.read_csv('your_file.csv')
+df = pd.read_csv('https://raw.githubusercontent.com/forittik/test_analysis_100_updated/refs/heads/main/final_mereged_data.csv')
 
 # Select the student
 student_id = st.selectbox('Select Student ID', df.columns[4:])
