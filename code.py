@@ -3,6 +3,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import fitz
+from PIL import Image
+import os
+import pathlib
+import google.generativeai as genai
+import time
+import random
+
+# Set up the API key for Google Generative AI
+GOOGLE_API_KEY = "your_google_api_key"
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
 # Load data from the CSV file
 data = pd.read_csv('https://raw.githubusercontent.com/forittik/test_analysis_100_updated/refs/heads/main/final_mereged_data.csv')
@@ -53,8 +65,38 @@ def calculate_subject_score(data, student_id, required_questions, optional_quest
 
     return min(score, 100)
 
+# Function to convert PDF pages to JPEG
+def pdf_page_to_jpeg(pdf_path, output_dir, page_numbers):
+    pdf_document = fitz.open(pdf_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    for page_num in page_numbers:
+        if page_num < 0 or page_num >= len(pdf_document):
+            continue
+
+        page = pdf_document.load_page(page_num)
+        pix = page.get_pixmap()
+        image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+
+        jpeg_filename = os.path.join(output_dir, f"page_{page_num + 1}.jpeg")
+        image.save(jpeg_filename, "JPEG")
+    pdf_document.close()
+
+# Function to process the image
+def process_image(image_path):
+    img = Image.open(image_path)
+    response = model.generate_content(["""From the given image, give me the topics and concepts that the questions depend upon. 
+    Also make sure that we constrain the chapter names to JEE syllabus only.
+    Also just give me topics and sub-topics without any description of that sub-topic.
+    Make sure the output is in sequence; don't jumble up question numbers.""", img])
+    return response.text
+
 # Streamlit UI
 st.title("JEE Mock Test Score Analysis")
+
+# Upload PDF File
+pdf_file = st.file_uploader("Upload a PDF File", type=["pdf"])
 
 # Select multiple student IDs
 student_ids = st.multiselect("Select Student IDs", options=data.columns[3:])
@@ -85,9 +127,6 @@ if student_ids:
         st.write(f"Total Score: {total_scores[i]} / 300")
         st.write("---")
 
-    # The rest of your existing code for plotting can remain as it is
-
-
     all_student_columns = data.columns[3:]
     all_total_scores = [
         calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL) +
@@ -117,15 +156,15 @@ if student_ids:
     st.subheader("Subject-wise Average Scores (Selected vs All Students)")
     avg_physics_all_students = np.mean([
         calculate_subject_score(data, student_id, PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
-        for student_id in all_student_columns
+        for student_id in data.columns[3:]
     ])
     avg_chemistry_all_students = np.mean([
         calculate_subject_score(data, student_id, CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
-        for student_id in all_student_columns
+        for student_id in data.columns[3:]
     ])
     avg_mathematics_all_students = np.mean([
         calculate_subject_score(data, student_id, MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
-        for student_id in all_student_columns
+        for student_id in data.columns[3:]
     ])
 
     avg_physics_selected = np.mean(physics_scores)
@@ -167,146 +206,57 @@ if student_ids:
     ax.legend()
     st.pyplot(fig)
 
-    # Subject-wise Performance Comparison - Side-by-Side Column Chart
-    st.subheader("Subject-wise Performance Comparison (Side-by-Side Column Chart)")
-
-    # Ensure the lists match the length of student_ids
-    if len(student_ids) == len(physics_scores) == len(chemistry_scores) == len(mathematics_scores):
-        subjects = ['Physics', 'Chemistry', 'Mathematics']
-        subject_scores = [physics_scores, chemistry_scores, mathematics_scores]
-
-        # Create a side-by-side bar chart
-        width = 0.25  # Width of bars
-        x = np.arange(len(student_ids))  # Position of bars on x-axis
-
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.bar(x - width, physics_scores, width, label='Physics', color='blue')
-        ax.bar(x, chemistry_scores, width, label='Chemistry', color='green')
-        ax.bar(x + width, mathematics_scores, width, label='Mathematics', color='orange')
-
-        # Label the bars with their scores
-        for i, v in enumerate(physics_scores):
-            ax.text(x[i] - width, v + 1, str(v), ha='center', fontweight='bold')
-        for i, v in enumerate(chemistry_scores):
-            ax.text(x[i], v + 1, str(v), ha='center', fontweight='bold')
-        for i, v in enumerate(mathematics_scores):
-            ax.text(x[i] + width, v + 1, str(v), ha='center', fontweight='bold')
-
-        ax.set_xlabel("Student IDs")
-        ax.set_ylabel("Scores")
-        ax.set_title("Subject-wise Scores (Side-by-Side Comparison)")
-        ax.set_xticks(x)
-        ax.set_xticklabels(student_ids)
-        ax.legend()
-        st.pyplot(fig)
-
     # Chapter-wise Average Score Analysis
-        # Chapter-wise Average Score Analysis
-    # Chapter-wise Average Score Analysis
-st.subheader("Chapter-wise Average Score Analysis")
+    st.subheader("Chapter-wise Average Score Analysis")
+    chapter_scores = {}
+    chapter_question_counts = {}
 
-# Create a dictionary to store chapter-wise scores
-chapter_scores = {}
-chapter_question_counts = {}
-
-# Iterate through the questions in the data and calculate the scores for each chapter
-for student_id in student_ids:
-    for q in data['Question_no']:
-        # Get the chapter name directly from the 'Chapter_name' column
-        chapter = data.loc[data['Question_no'] == q, 'Chapter_name'].values[0]
-        correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
-        student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
-
-        # Update chapter scores and counts
-        if chapter not in chapter_scores:
-            chapter_scores[chapter] = 0
-            chapter_question_counts[chapter] = 0
-
-        if student_answer == correct_answer:
-            chapter_scores[chapter] += CORRECT_MARK
-        elif pd.isna(student_answer):
-            chapter_scores[chapter] += UNATTEMPTED_MARK
-        else:
-            chapter_scores[chapter] += WRONG_MARK
-
-        chapter_question_counts[chapter] += 1
-
-# Calculate average score per chapter
-chapter_avg_scores = {
-    chapter: chapter_scores[chapter] / chapter_question_counts[chapter] 
-    for chapter in chapter_scores
-}
-
-# Plot Chapter-wise Average Scores
-chapters = list(chapter_avg_scores.keys())
-avg_scores = list(chapter_avg_scores.values())
-
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.barh(chapters, avg_scores, color='teal')
-
-ax.set_xlabel("Average Score")
-ax.set_ylabel("Chapters")
-ax.set_title("Chapter-wise Average Scores")
-
-# Display the plot
-st.pyplot(fig)
-
-# Chapter-wise Question Distribution for Physics, Chemistry, and Mathematics
-st.subheader("Chapter-wise Question Distribution for Physics, Chemistry, and Mathematics")
-
-# Function to calculate the number of questions per chapter for each subject
-import streamlit as st
-import matplotlib.pyplot as plt
-
-# Function to calculate the number of questions per chapter for each subject
-import streamlit as st
-import matplotlib.pyplot as plt
-
-# Function to calculate the number of questions per chapter for each subject
-def chapter_question_distribution(subject_required, subject_optional):
-    # Combine required and optional questions for the subject
-    subject_questions = subject_required + subject_optional
-    chapter_counts = {}
-
-    for q in subject_questions:
-        if q in data['Question_no'].values:
+    for student_id in student_ids:
+        for q in data['Question_no']:
             chapter = data.loc[data['Question_no'] == q, 'Chapter_name'].values[0]
-            if chapter not in chapter_counts:
-                chapter_counts[chapter] = 0
-            chapter_counts[chapter] += 1
+            correct_answer = data.loc[data['Question_no'] == q, 'correct_answer_key'].values[0]
+            student_answer = data.loc[data['Question_no'] == q, student_id].values[0]
 
-    return chapter_counts
+            if chapter not in chapter_scores:
+                chapter_scores[chapter] = 0
+                chapter_question_counts[chapter] = 0
 
-# Get chapter-wise question distribution for each subject
-physics_chapter_distribution = chapter_question_distribution(PHYSICS_REQUIRED, PHYSICS_OPTIONAL)
-chemistry_chapter_distribution = chapter_question_distribution(CHEMISTRY_REQUIRED, CHEMISTRY_OPTIONAL)
-mathematics_chapter_distribution = chapter_question_distribution(MATHEMATICS_REQUIRED, MATHEMATICS_OPTIONAL)
+            if student_answer == correct_answer:
+                chapter_scores[chapter] += CORRECT_MARK
+            elif pd.isna(student_answer):
+                chapter_scores[chapter] += UNATTEMPTED_MARK
+            else:
+                chapter_scores[chapter] += WRONG_MARK
 
-# List of subjects and their respective chapter distributions
-subjects = ['Physics', 'Chemistry', 'Mathematics']
-chapter_distributions = [physics_chapter_distribution, chemistry_chapter_distribution, mathematics_chapter_distribution]
+            chapter_question_counts[chapter] += 1
 
-# Streamlit UI for subject navigation
-subject_selection = st.selectbox("Select Subject", options=subjects)
+    chapter_avg_scores = {
+        chapter: chapter_scores[chapter] / chapter_question_counts[chapter]
+        for chapter in chapter_scores
+    }
 
-# Determine which subject's chapter distribution to plot
-if subject_selection == 'Physics':
-    chapter_distribution = physics_chapter_distribution
-elif subject_selection == 'Chemistry':
-    chapter_distribution = chemistry_chapter_distribution
-else:
-    chapter_distribution = mathematics_chapter_distribution
+    chapters = list(chapter_avg_scores.keys())
+    avg_scores = list(chapter_avg_scores.values())
 
-# Plot the selected subject's chapter distribution
-fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.barh(chapters, avg_scores, color='teal')
 
-ax.bar(chapter_distribution.keys(), chapter_distribution.values(), color='teal')
-ax.set_title(f"{subject_selection} Chapter-wise Question Distribution")
-ax.set_xlabel("Chapters")
-ax.set_ylabel("Number of Questions")
+    ax.set_xlabel("Average Score")
+    ax.set_ylabel("Chapters")
+    ax.set_title("Chapter-wise Average Scores")
+    st.pyplot(fig)
 
-# Rotate x-axis labels and align them
-ax.set_xticklabels(chapter_distribution.keys(), rotation=45, ha='right')
+    # Handling PDF for Image-based Question Analysis
+    if pdf_file:
+        st.subheader("PDF Image-based Analysis")
+        pdf_path = pdf_file
+        output_dir = "output_images"
+        page_numbers = [0, 1, 2]  # Example: extract the first three pages
+        pdf_page_to_jpeg(pdf_path, output_dir, page_numbers)
+        
+        for page_num in page_numbers:
+            image_path = f"{output_dir}/page_{page_num + 1}.jpeg"
+            st.image(image_path, caption=f"Page {page_num + 1}", use_column_width=True)
 
-# Display the plot
-st.pyplot(fig)
+            image_text = process_image(image_path)
+            st.text_area(f"Text from Page {page_num + 1}", image_text, height=300)
