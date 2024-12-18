@@ -3,9 +3,5 @@ pandas
 matplotlib
 seaborn
 numpy
-pymupdf==1.23.2
-Pillow==9.4.0
-google-generativeai==0.3.2
-openai==0.28.0
-torch
+
 
